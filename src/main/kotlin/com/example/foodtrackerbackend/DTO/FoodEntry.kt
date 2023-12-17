@@ -10,5 +10,4 @@ class FoodEntry(
     val mealDescription: String,
     val additionalComments: String,
     val kilojoules: Int,
-    ) {
-}
+    )
