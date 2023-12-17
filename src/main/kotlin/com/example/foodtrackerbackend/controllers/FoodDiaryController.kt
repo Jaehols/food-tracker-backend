@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.net.URI
-import java.sql.Timestamp
 import java.util.*
 
 
@@ -18,7 +17,7 @@ class FoodDiaryController(private val foodEntryService: FoodEntryService) {
     @GetMapping("/entry/{entryId}")
     fun getFoodEntryById(@PathVariable entryId: UUID): ResponseEntity<FoodEntry>{
         //TODO actually implement this
-        val foodEntry = foodEntryService.GetFoodEntryById(entryId)
+        val foodEntry = foodEntryService.getFoodEntryById(entryId)
         return if (foodEntry != null){
             ResponseEntity.ok(foodEntry)
         } else {
@@ -29,7 +28,7 @@ class FoodDiaryController(private val foodEntryService: FoodEntryService) {
     @PostMapping("/new-entry")
     fun saveNewFoodEntry(@RequestBody foodEntryRequest: FoodEntryRequestBody): ResponseEntity<Void> {
 
-        val newEntryId = foodEntryService.SaveNewFoodEntry(
+        val newEntryId = foodEntryService.saveNewFoodEntry(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
                 foodEntryRequest.entryTime,
