@@ -1,12 +1,14 @@
 package com.example.foodtrackerbackend.services
 
 import com.example.foodtrackerbackend.DTO.FoodEntry
+import com.mongodb.kotlin.client.coroutine.MongoClient
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.sql.Timestamp
 import java.util.*
 
 @Service
-class FoodEntryService {
+class FoodEntryService(@Autowired private val mongoClient: MongoClient) {
 
     fun getFoodEntryById(entryId: UUID): FoodEntry? {
         //TODO implement proper function
