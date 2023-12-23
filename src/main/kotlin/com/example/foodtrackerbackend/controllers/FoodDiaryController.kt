@@ -30,7 +30,7 @@ class FoodDiaryController(private val foodEntryService: FoodEntryService) {
 
         val newEntryId = foodEntryService.saveNewFoodEntry(
                 UUID.randomUUID(),
-                UUID.randomUUID(),
+                foodEntryRequest.userId,
                 foodEntryRequest.entryTime,
                 foodEntryRequest.mealDescription,
                 foodEntryRequest.additionalComments,

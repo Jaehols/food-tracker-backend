@@ -5,7 +5,7 @@ import java.util.*
 
 class FoodEntry(
     val entryId: UUID,
-    val userId: UUID,
+    val userId: String,
     val entryTime: Timestamp,
     val mealDescription: String,
     val additionalComments: String,
