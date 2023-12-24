@@ -5,17 +5,18 @@ import com.example.foodtrackerbackend.DTO.FoodEntryRequestBody
 import com.example.foodtrackerbackend.services.FoodEntryService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import org.springframework.web.server.ServerWebExchange
+import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
 import java.util.*
 
-
+private const val baseAddress: String = "api/v1/food-diary"
 @RestController
-@RequestMapping("api/v1/food-diary")
+@RequestMapping(baseAddress)
 class FoodDiaryController(private val foodEntryService: FoodEntryService) {
 
     @GetMapping("/entry/{entryId}")
-    fun getFoodEntryById(@PathVariable entryId: UUID): ResponseEntity<FoodEntry>{
+    suspend fun getFoodEntryById(@PathVariable entryId: UUID): ResponseEntity<FoodEntry>{
         //TODO actually implement this
         val foodEntry = foodEntryService.getFoodEntryById(entryId)
         return if (foodEntry != null){
@@ -26,22 +27,27 @@ class FoodDiaryController(private val foodEntryService: FoodEntryService) {
     }
 
     @PostMapping("/new-entry")
-    fun saveNewFoodEntry(@RequestBody foodEntryRequest: FoodEntryRequestBody): ResponseEntity<Void> {
-
+    suspend fun saveNewFoodEntry(
+        @RequestBody foodEntryRequest: FoodEntryRequestBody,
+        exchange: ServerWebExchange
+    ): ResponseEntity<Void> {
         val newEntryId = foodEntryService.saveNewFoodEntry(
-                UUID.randomUUID(),
-                foodEntryRequest.userId,
-                foodEntryRequest.entryTime,
-                foodEntryRequest.mealDescription,
-                foodEntryRequest.additionalComments,
-                foodEntryRequest.kilojoules
+            UUID.randomUUID(),
+            foodEntryRequest.userId,
+            foodEntryRequest.entryTime,
+            foodEntryRequest.mealDescription,
+            foodEntryRequest.additionalComments,
+            foodEntryRequest.kilojoules
         )
 
-        val location: URI = ServletUriComponentsBuilder.fromCurrentRequest()
-            .path("/entry/{newEntryId}")
-            .buildAndExpand(newEntryId)
-            .toUri()
+        val location: URI = exchange.createUri(newEntryId)
 
         return ResponseEntity.created(location).build()
+    }
+
+    private fun ServerWebExchange.createUri(newEntryId: UUID): URI {
+        return UriComponentsBuilder.fromPath("$baseAddress/entry/{newEntryId}")
+            .buildAndExpand(newEntryId)
+            .toUri()
     }
 }
