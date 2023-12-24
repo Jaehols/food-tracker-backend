@@ -16,9 +16,8 @@ private const val baseAddress: String = "api/v1/food-diary"
 class FoodDiaryController(private val foodEntryService: FoodEntryService) {
 
     @GetMapping("/entry/{entryId}")
-    suspend fun getFoodEntryById(@PathVariable entryId: UUID): ResponseEntity<FoodEntry>{
-        //TODO actually implement this
-        val foodEntry = foodEntryService.getFoodEntryById(entryId)
+    suspend fun getFoodEntryById(@PathVariable entryId: UUID, @RequestParam userId: String): ResponseEntity<FoodEntry>{
+        val foodEntry = foodEntryService.getFoodEntryById(entryId, userId)
         return if (foodEntry != null){
             ResponseEntity.ok(foodEntry)
         } else {
@@ -40,12 +39,12 @@ class FoodDiaryController(private val foodEntryService: FoodEntryService) {
             foodEntryRequest.kilojoules
         )
 
-        val location: URI = exchange.createUri(newEntryId)
+        val location: URI = createUri(newEntryId)
 
         return ResponseEntity.created(location).build()
     }
 
-    private fun ServerWebExchange.createUri(newEntryId: UUID): URI {
+    private fun createUri(newEntryId: UUID): URI {
         return UriComponentsBuilder.fromPath("$baseAddress/entry/{newEntryId}")
             .buildAndExpand(newEntryId)
             .toUri()

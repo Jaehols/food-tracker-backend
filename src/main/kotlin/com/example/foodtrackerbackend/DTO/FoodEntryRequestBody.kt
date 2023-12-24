@@ -1,9 +1,9 @@
 package com.example.foodtrackerbackend.DTO
 
-import java.sql.Timestamp
+import java.util.*
 
 class FoodEntryRequestBody(
-        val entryTime: Timestamp,
+        val entryTime: Date,
         val userId: String,
         val mealDescription: String,
         val additionalComments: String,
