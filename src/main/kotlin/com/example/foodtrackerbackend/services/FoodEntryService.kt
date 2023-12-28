@@ -2,13 +2,15 @@ package com.example.foodtrackerbackend.services
 
 import com.example.foodtrackerbackend.DTO.FoodEntry
 import com.example.foodtrackerbackend.Utilities.MongoUtilities.Companion.getOrCreateCollection
-import com.mongodb.client.model.Filters.eq
+import com.mongodb.client.model.Filters.*
 import com.mongodb.client.model.InsertOneOptions
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.toList
 import org.bson.Document
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.time.LocalDate
 import java.util.*
 
 @Service
@@ -59,5 +61,37 @@ class FoodEntryService(@Autowired private val mongoClient: MongoClient) {
 
         collection.insertOne(document, InsertOneOptions().bypassDocumentValidation(false))
         return foodEntry.entryId
+    }
+
+    suspend fun getFoodEntriesByAuthorId(authorId: String): List<FoodEntry> {
+        val collection = getOrCreateCollection(database, authorId)
+        val documents = collection.find().toList()
+        return documents.map { doc ->
+            FoodEntry(
+                entryId = UUID.fromString(doc.getString(ENTRY_ID_FIELD)),
+                userId = doc.getString(USER_ID_FIELD),
+                entryTime = doc.getDate(ENTRY_TIME_FIELD),
+                createdTime = doc.getDate(CREATED_TIME_FIELD),
+                mealDescription = doc.getString(MEAL_DESCRIPTION_FIELD),
+                additionalComments = doc.getString(ADDITIONAL_COMMENTS_FIELD),
+                kilojoules = doc.getInteger(KILOJOULES_FIELD)
+            )
+        }
+    }
+
+    suspend fun getFoodEntriesByAuthorIdAndDateRange(authorId: String, startDate: LocalDate, endDate: LocalDate): List<FoodEntry> {
+        val collection = getOrCreateCollection(database, authorId)
+        val documents = collection.find(and(gte(ENTRY_TIME_FIELD, startDate), lte(ENTRY_TIME_FIELD, endDate))).toList()
+        return documents.map { doc ->
+            FoodEntry(
+                entryId = UUID.fromString(doc.getString(ENTRY_ID_FIELD)),
+                userId = doc.getString(USER_ID_FIELD),
+                entryTime = doc.getDate(ENTRY_TIME_FIELD),
+                createdTime = doc.getDate(CREATED_TIME_FIELD),
+                mealDescription = doc.getString(MEAL_DESCRIPTION_FIELD),
+                additionalComments = doc.getString(ADDITIONAL_COMMENTS_FIELD),
+                kilojoules = doc.getInteger(KILOJOULES_FIELD)
+            )
+        }
     }
 }
