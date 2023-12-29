@@ -11,6 +11,7 @@ import org.bson.Document
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDate
+import java.time.ZoneId
 import java.util.*
 
 @Service
@@ -81,7 +82,12 @@ class FoodEntryService(@Autowired private val mongoClient: MongoClient) {
 
     suspend fun getFoodEntriesByAuthorIdAndDateRange(authorId: String, startDate: LocalDate, endDate: LocalDate): List<FoodEntry> {
         val collection = getOrCreateCollection(database, authorId)
-        val documents = collection.find(and(gte(ENTRY_TIME_FIELD, startDate), lte(ENTRY_TIME_FIELD, endDate))).toList()
+        val startDateTime = Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+
+        val adjustedEndDate = if (startDate.isEqual(endDate)) endDate.plusDays(1) else endDate
+        val endDateTime = Date.from(adjustedEndDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+
+        val documents = collection.find(and(gte(ENTRY_TIME_FIELD, startDateTime), lt(ENTRY_TIME_FIELD, endDateTime))).toList()
         return documents.map { doc ->
             FoodEntry(
                 entryId = UUID.fromString(doc.getString(ENTRY_ID_FIELD)),

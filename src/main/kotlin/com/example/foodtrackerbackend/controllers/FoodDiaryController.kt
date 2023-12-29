@@ -39,11 +39,7 @@ class FoodDiaryController(private val foodEntryService: FoodEntryService) {
             foodEntryService.getFoodEntriesByAuthorId(authorId)
         }
 
-        return if (entries.isNotEmpty()){
-            ResponseEntity.ok(entries)
-        } else {
-            ResponseEntity.notFound().build()
-        }
+        return ResponseEntity.ok(entries)
     }
 
     @PostMapping("/new-entry")
