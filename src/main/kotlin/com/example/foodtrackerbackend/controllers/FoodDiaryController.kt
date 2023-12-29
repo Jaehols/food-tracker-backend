@@ -61,6 +61,17 @@ class FoodDiaryController(private val foodEntryService: FoodEntryService) {
         return ResponseEntity.created(location).build()
     }
 
+    @DeleteMapping("/entry/{entryId}")
+    suspend fun deleteFoodEntryById(@PathVariable entryId: UUID, @RequestParam userId: String): ResponseEntity<Void> {
+        val foodEntry = foodEntryService.getFoodEntryById(entryId, userId)
+        return if (foodEntry != null){
+            foodEntryService.deleteFoodEntryById(entryId, userId)
+            ResponseEntity.ok().build()
+        } else {
+            ResponseEntity.notFound().build()
+        }
+    }
+
     private fun createUri(newEntryId: UUID): URI {
         return UriComponentsBuilder.fromPath("$baseAddress/entry/{newEntryId}")
             .buildAndExpand(newEntryId)

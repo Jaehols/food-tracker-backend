@@ -100,4 +100,9 @@ class FoodEntryService(@Autowired private val mongoClient: MongoClient) {
             )
         }
     }
+
+    suspend fun deleteFoodEntryById(entryId: UUID, userId: String) {
+        val collection = getOrCreateCollection(database, userId)
+        collection.deleteOne(eq(ENTRY_ID_FIELD, entryId.toString()))
+    }
 }
