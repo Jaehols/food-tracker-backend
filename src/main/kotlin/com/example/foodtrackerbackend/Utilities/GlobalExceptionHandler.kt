@@ -1,28 +1,17 @@
-import org.springframework.http.ResponseEntity
-import org.springframework.web.context.request.WebRequest
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
-import org.springframework.http.converter.HttpMessageNotReadableException
-import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
-import org.springframework.web.bind.annotation.ControllerAdvice
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.http.converter.HttpMessageNotReadableException
+import reactor.core.publisher.Mono
 
-@ControllerAdvice
-class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
+@RestControllerAdvice
+class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException::class)
-    fun handleHttpMessageNotReadable(
-            ex: HttpMessageNotReadableException,
-            request: WebRequest
-    ): ResponseEntity<Any> {
+    fun handleHttpMessageNotReadable(ex: HttpMessageNotReadableException): Mono<ResponseEntity<Any>> {
         val bodyOfResponse = "Invalid JSON format or structure"
-        val responseEntity = handleExceptionInternal(
-                ex,
-                bodyOfResponse,
-                HttpHeaders(),
-                HttpStatus.BAD_REQUEST,
-                request
-        )
-        return responseEntity ?: ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
+        return Mono.just(ResponseEntity(bodyOfResponse, HttpStatus.BAD_REQUEST))
     }
 }
+

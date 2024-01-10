@@ -3,22 +3,23 @@ package com.example.foodtrackerbackend.controllers
 import com.example.foodtrackerbackend.DTO.FoodEntry
 import com.example.foodtrackerbackend.DTO.FoodEntryRequestBody
 import com.example.foodtrackerbackend.services.FoodEntryService
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import org.springframework.web.server.ServerWebExchange
+import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
-import java.sql.Timestamp
+import java.time.LocalDate
 import java.util.*
 
-
+private const val baseAddress: String = "api/v1/food-diary"
 @RestController
-@RequestMapping("api/v1/food-diary")
+@RequestMapping(baseAddress)
 class FoodDiaryController(private val foodEntryService: FoodEntryService) {
 
     @GetMapping("/entry/{entryId}")
-    fun getFoodEntryById(@PathVariable entryId: UUID): ResponseEntity<FoodEntry>{
-        //TODO actually implement this
-        val foodEntry = foodEntryService.GetFoodEntryById(entryId)
+    suspend fun getFoodEntryById(@PathVariable entryId: UUID, @RequestParam userId: String): ResponseEntity<FoodEntry>{
+        val foodEntry = foodEntryService.getFoodEntryById(entryId, userId)
         return if (foodEntry != null){
             ResponseEntity.ok(foodEntry)
         } else {
@@ -26,23 +27,54 @@ class FoodDiaryController(private val foodEntryService: FoodEntryService) {
         }
     }
 
-    @PostMapping("/new-entry")
-    fun saveNewFoodEntry(@RequestBody foodEntryRequest: FoodEntryRequestBody): ResponseEntity<Void> {
+    @GetMapping("entriesByAuthor/{authorId}")
+    suspend fun getAllFoodEntriesByAuthorId(
+        @PathVariable authorId: String,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) startDate: LocalDate?,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate?
+    ): ResponseEntity<List<FoodEntry>> {
+        val entries = if (startDate != null && endDate != null) {
+            foodEntryService.getFoodEntriesByAuthorIdAndDateRange(authorId, startDate, endDate)
+        } else {
+            foodEntryService.getFoodEntriesByAuthorId(authorId)
+        }
 
-        val newEntryId = foodEntryService.SaveNewFoodEntry(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                foodEntryRequest.entryTime,
-                foodEntryRequest.mealDescription,
-                foodEntryRequest.additionalComments,
-                foodEntryRequest.kilojoules
+        return ResponseEntity.ok(entries)
+    }
+
+    @PostMapping("/new-entry")
+    suspend fun saveNewFoodEntry(
+        @RequestBody foodEntryRequest: FoodEntryRequestBody,
+        exchange: ServerWebExchange
+    ): ResponseEntity<Void> {
+        val newEntryId = foodEntryService.saveNewFoodEntry(
+            UUID.randomUUID(),
+            foodEntryRequest.userId,
+            foodEntryRequest.entryTime,
+            foodEntryRequest.mealDescription,
+            foodEntryRequest.additionalComments,
+            foodEntryRequest.kilojoules
         )
 
-        val location: URI = ServletUriComponentsBuilder.fromCurrentRequest()
-            .path("/entry/{newEntryId}")
-            .buildAndExpand(newEntryId)
-            .toUri()
+        val location: URI = createUri(newEntryId)
 
         return ResponseEntity.created(location).build()
+    }
+
+    @DeleteMapping("/entry/{entryId}")
+    suspend fun deleteFoodEntryById(@PathVariable entryId: UUID, @RequestParam userId: String): ResponseEntity<Void> {
+        val foodEntry = foodEntryService.getFoodEntryById(entryId, userId)
+        return if (foodEntry != null){
+            foodEntryService.deleteFoodEntryById(entryId, userId)
+            ResponseEntity.ok().build()
+        } else {
+            ResponseEntity.notFound().build()
+        }
+    }
+
+    private fun createUri(newEntryId: UUID): URI {
+        return UriComponentsBuilder.fromPath("$baseAddress/entry/{newEntryId}")
+            .buildAndExpand(newEntryId)
+            .toUri()
     }
 }
